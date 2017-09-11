@@ -14,6 +14,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.animation.GlideAnimation;
@@ -45,7 +46,7 @@ import butterknife.Unbinder;
  * Created by thinking on 2017/7/24.
  * 创建时间：
  * <p>
- * 描述：
+ * 描述：店铺页面中的店铺简介页面(展示该店铺的关注人数等、店铺图片信息等)
  * <p/>
  * <p/>
  * *******************************************
@@ -68,14 +69,15 @@ public class ShopInfoFragment extends Fragment {
         unbinder = ButterKnife.bind(this, shopInfoView);
         Bundle bundle = getArguments();
         String url = bundle.getString(Commen.SHOWPICS);
+        int sid=bundle.getInt(Commen.SHOPSID);
+
         if (!url.equals("")) {
             imageurl = url.split(";");
             imagelist = new ArrayList<>();
             Collections.addAll(imagelist, imageurl);
             infopageRecyclerview.setLayoutManager(new LinearLayoutManager(getContext()));
-            infopageRecyclerview.setAdapter(new ImageAdapter(getContext(), imagelist));
+            infopageRecyclerview.setAdapter(new ImageAdapter(getContext(), imagelist,sid));
         }
-
 
         return shopInfoView;
     }
@@ -88,14 +90,16 @@ public class ShopInfoFragment extends Fragment {
         public Context mContext;
         public LayoutInflater mLayoutInflater;
         private ArrayList<String> imagelist;
+        private int sid;
         public static final int ITEM_TYPE_HEADER = 0;
         public static final int ITEM_TYPE_CONTENT = 1;
         private int mHeaderCount = 1;//头部View个数
 
-        public ImageAdapter(Context mContext, ArrayList<String> imagelist) {
+        public ImageAdapter(Context mContext, ArrayList<String> imagelist, int sid) {
             this.mContext = mContext;
             this.mLayoutInflater = LayoutInflater.from(mContext);
             this.imagelist = imagelist;
+            this.sid=sid;
         }
 
         //判断当前item是否是HeadView
@@ -128,13 +132,38 @@ public class ShopInfoFragment extends Fragment {
         public void onBindViewHolder(final RecyclerView.ViewHolder holder, int position) {
             if (holder instanceof HeaderViewHolder) {
                 final User user = (User) SpUtils.getObject(mContext, Commen.USERINFO);
-                ((HeaderViewHolder) holder).attentionNum.setText("1");
-                ((HeaderViewHolder) holder).saleNum.setText("2");
-                ((HeaderViewHolder) holder).partnersNum.setText("3");
 
+                ((HeaderViewHolder) holder).partnersNum.setText("暂无");
+                NetWorks.getShopAttentionSize(sid, new BaseObserver<Integer>() {
+                    @Override
+                    public void onHandleSuccess(Integer integer) {
+                        if (integer==null){
+                            ((HeaderViewHolder) holder).attentionNum.setText("暂无人关注");
+                        }else
+                        ((HeaderViewHolder) holder).attentionNum.setText(integer + "人已关注");
+                    }
 
+                    @Override
+                    public void onHandleError(int code, String message) {
+                        Toast.makeText(mContext, code + message, Toast.LENGTH_SHORT).show();
+                    }
+                });
+                NetWorks.getSidSalesTotal(sid, new BaseObserver<Double>() {
+                    @Override
+                    public void onHandleSuccess(Double aDouble) {
+                        if (aDouble==null){
+                            ((HeaderViewHolder) holder).saleNum.setText("暂无销售量");
+                        }else
+                        ((HeaderViewHolder) holder).saleNum.setText(aDouble + "元");
+                    }
 
-                ((HeaderViewHolder) holder).attention.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onHandleError(int code, String message) {
+                        Toast.makeText(getContext(), code + message, Toast.LENGTH_SHORT).show();
+                    }
+                });
+
+               /* ((HeaderViewHolder) holder).attention.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
                         if (((HeaderViewHolder) holder).attention.getText().toString().equals("关注")) {
@@ -143,7 +172,7 @@ public class ShopInfoFragment extends Fragment {
                             ((HeaderViewHolder) holder).attention.setTextColor(getResources().getColor(R.color.colorPrimary));
                         }
                     }
-                });
+                });*/
             } else if (holder instanceof ImageHolder) {
                 //先使用 Glide 把图片的原图请求加载过来，然后再按原图来显示图片
                 Glide.with(mContext)
@@ -191,9 +220,6 @@ public class ShopInfoFragment extends Fragment {
             private TextView saleNum;
             private TextView partners;
             private TextView partnersNum;
-          /*  private Button viewShelvesAbove;
-            private Button viewShelvesBelow;
-            private Button viewPartnerGoods;*/
 
             public HeaderViewHolder(View itemView) {
                 super(itemView);
@@ -203,9 +229,6 @@ public class ShopInfoFragment extends Fragment {
                 saleNum = (TextView) itemView.findViewById(R.id.sale_num);
                 partners = (TextView) itemView.findViewById(R.id.partners);
                 partnersNum = (TextView) itemView.findViewById(R.id.partners_num);
-               /* viewShelvesAbove = (Button) itemView.findViewById(R.id.view_shelves_above);
-                viewShelvesBelow = (Button) itemView.findViewById(R.id.view_shelves_below);
-                viewPartnerGoods = (Button) itemView.findViewById(R.id.view_partner_goods);*/
             }
 
         }

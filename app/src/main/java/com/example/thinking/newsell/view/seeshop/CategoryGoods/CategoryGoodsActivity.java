@@ -6,11 +6,14 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.view.View;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.thinking.newsell.R;
 import com.example.thinking.newsell.bean.Commodity;
+import com.example.thinking.newsell.commen.Commen;
 
 import java.util.List;
 
@@ -22,7 +25,7 @@ import butterknife.ButterKnife;
  * Created by thinking on 2017/7/21.
  * 创建时间：
  * <p>
- * 描述：
+ * 描述：店铺分类查看商品的页面
  * <p/>
  * <p/>
  * *******************************************
@@ -30,12 +33,14 @@ import butterknife.ButterKnife;
 
 public class CategoryGoodsActivity extends AppCompatActivity {
 
-    @BindView(R.id.title_name)
-    TextView titleName;
+   /* @BindView(R.id.title_name)
+    TextView titleName;*/
     @BindView(R.id.category_toolbar)
     Toolbar categoryToolbar;
     @BindView(R.id.category_goods_recyclerview)
     RecyclerView categoryGoodsRecyclerview;
+
+    LinearLayout liNullgood;
 
     private CateGoodsAdapter mAdapter;
     @Override
@@ -43,32 +48,35 @@ public class CategoryGoodsActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.category_goods);
         ButterKnife.bind(this);
-        final List<Commodity> goodscate=(List<Commodity>) getIntent().getSerializableExtra("LISTGOODS");
-        final String name_small=(String)getIntent().getSerializableExtra("SORTNAME");
-        if(goodscate!=null) {
-            titleName.setText(name_small);
+        liNullgood=(LinearLayout)findViewById(R.id.li_nullgood);
+
+        final List<Commodity> goodscate=(List<Commodity>) getIntent().getSerializableExtra(Commen.CATEGORYGOODLIST);
+        final String name_small=(String)getIntent().getSerializableExtra(Commen.CATEGORYNAME);
+        if(goodscate.size()!=0) {
+            categoryToolbar.setTitle(name_small);
+            setSupportActionBar(categoryToolbar);
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+           // titleName.setText(name_small);
             categoryGoodsRecyclerview.setLayoutManager(new LinearLayoutManager(CategoryGoodsActivity.this));
             mAdapter = new CateGoodsAdapter(CategoryGoodsActivity.this, goodscate);
             categoryGoodsRecyclerview.setAdapter(mAdapter);
             categoryGoodsRecyclerview.setLayoutManager(new LinearLayoutManager(this));
-         /*   mAdapter.setItemClickListener(new CateGoodsAdapter.OnItemClickListener() {
 
-                public void onItemClick(View view, int position) {
-                    Intent intent = new Intent(CategoryGoodsActivity.this, GoodActivity.class);
-                    Bundle bundle = new Bundle();
-                    bundle.putSerializable("commodity",goodscate.get(position));
-                    intent.putExtras(bundle);
-                    startActivity(intent);
-
-                }*/
-
-
-             /*   public void onItemLongClick(View view, int position) {
-
-                }
-            });*/
         }
-        else
-            Toast.makeText(this, "是空的。。。。", Toast.LENGTH_SHORT).show();
+        else if (goodscate.size()==0){
+            categoryToolbar.setTitle(name_small);
+            setSupportActionBar(categoryToolbar);
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+            liNullgood.setVisibility(View.VISIBLE);
+            categoryGoodsRecyclerview.setVisibility(View.GONE);
+
+        }
+
+        categoryToolbar.setNavigationOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                finish();
+            }
+        });
     }
 }

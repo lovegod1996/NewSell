@@ -273,6 +273,7 @@ public class EaseMessageAdapter extends BaseAdapter{
 
     public void setItemClickListener(MessageListItemClickListener listener){
 	    itemClickListener = listener;
+
 	}
 	
 	public void setCustomChatRowProvider(EaseCustomChatRowProvider rowProvider){

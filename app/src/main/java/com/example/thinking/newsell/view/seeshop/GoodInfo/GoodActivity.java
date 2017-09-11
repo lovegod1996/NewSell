@@ -53,9 +53,11 @@ import com.example.thinking.newsell.bean.User;
 import com.example.thinking.newsell.commen.Commen;
 import com.example.thinking.newsell.utils.system.SpUtils;
 import com.example.thinking.newsell.view.chat.ChactActivity;
+import com.example.thinking.newsell.view.chat.ChatActivity;
 import com.example.thinking.newsell.view.seeshop.GoodInfo.Ask.AskActivity;
 import com.example.thinking.newsell.view.seeshop.GoodInfo.AssessInfo.AssessActivity;
 import com.example.thinking.newsell.view.seeshop.GoodInfo.Attention.GoodAttentionActivity;
+import com.example.thinking.newsell.view.seeshop.ShopActivity;
 import com.example.thinking.newsell.view.views.StarRating;
 import com.github.chrisbanes.photoview.PhotoView;
 import com.hyphenate.chat.EMMessage;
@@ -72,6 +74,8 @@ import java.util.Map;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 
+import static com.baidu.location.d.j.s;
+import static com.example.thinking.newsell.R.id.compare;
 import static com.example.thinking.newsell.R.id.image_details_listview;
 import static com.example.thinking.newsell.R.id.li_title;
 import static com.example.thinking.newsell.R.id.tv_good_detail_cate;
@@ -187,7 +191,7 @@ public class GoodActivity extends Activity implements GradationScrollView.Scroll
     private RelativeLayout relativeLayout;
     private FloatingActionButton askButton;
     //问答动画是否执行
-    private boolean isAnmi=true;
+    private boolean isAnmi = true;
 
     private LinearLayout liAboutPartner;
     private TextView liPartnerNum;
@@ -205,12 +209,13 @@ public class GoodActivity extends Activity implements GradationScrollView.Scroll
             "3840*2160", "LED", "LED液晶电视机", "KD-55X6000D", "195W", "500:1", "是", "16.8KG(不含底座)", "Linux", "MPEG1/MPEG2PS/MPEG2TS/AVCHD/MP4Part10/MP4Part2/AVI/MOV/WMV/MKV/RMVB/WEBM/3GPP"};
 
     Commodity commodity;
+
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.good_information);
         ButterKnife.bind(this);
 
-        askButton=(FloatingActionButton)findViewById(R.id.good_info_ask_button);
+        askButton = (FloatingActionButton) findViewById(R.id.good_info_ask_button);
         liAboutPartner = (LinearLayout) findViewById(R.id.li_about_partner);
         liPartnerNum = (TextView) findViewById(R.id.li_partner_num);
         liIntentionNum = (TextView) findViewById(R.id.li_intention_num);
@@ -231,11 +236,11 @@ public class GoodActivity extends Activity implements GradationScrollView.Scroll
         textviewGood.setText(commodity.getProductname());//标题栏的商品名字
 
         User user = (User) SpUtils.getObject(this, Commen.USERINFO);
-        if (commodity.getSid() == user.getSid()) {
+        if (commodity.getSid() == SpUtils.getInt(GoodActivity.this, Commen.SHOPSIDdefault)) {
             l1.setVisibility(View.VISIBLE);
-          //  RelativeLayout.LayoutParams lp=new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,ViewGroup.LayoutParams.WRAP_CONTENT);
-          //  lp.addRule(RelativeLayout.ABOVE,R.id.l1);
-        //   relativeLayout.addView(askButton,lp);
+            //  RelativeLayout.LayoutParams lp=new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,ViewGroup.LayoutParams.WRAP_CONTENT);
+            //  lp.addRule(RelativeLayout.ABOVE,R.id.l1);
+            //   relativeLayout.addView(askButton,lp);
 
             //商品的状态0上架1下架
             if (commodity.getStatue() == 0) {
@@ -273,6 +278,7 @@ public class GoodActivity extends Activity implements GradationScrollView.Scroll
 
             initlistener();
         } else {
+
             l2.setVisibility(View.VISIBLE);
             //商品的合作状态0未合作1已合作
             if (commodity.getPartstatue() == 0) {
@@ -296,23 +302,15 @@ public class GoodActivity extends Activity implements GradationScrollView.Scroll
 
         }
 
-
-        /*onshelf.setText(Commen.OFFSHELF);
-        onshelf.setBackgroundColor(Color.GRAY);*/
-
-        //透明状态栏
-        // StatusBarUtil.setTranslucent(this, 110);
-
         // 店铺信息的展示
         initShopInfo(commodity);
-
 
         /**问答的按钮监听*/
         askButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent=new Intent(GoodActivity.this,AskActivity.class);
-                intent.putExtra("commodity",commodity);
+                Intent intent = new Intent(GoodActivity.this, AskActivity.class);
+                intent.putExtra("commodity", commodity);
                 startActivity(intent);
             }
         });
@@ -323,6 +321,7 @@ public class GoodActivity extends Activity implements GradationScrollView.Scroll
             public void onClick(View v) {
                 Intent intent = new Intent(GoodActivity.this, AssessActivity.class);
                 Bundle bundle = new Bundle();
+                bundle.getInt(Commen.SHOPSID,commodity.getSid());
                 bundle.putString("Cid", String.valueOf(commodity.getCid()));
                 intent.putExtras(bundle);
                 startActivity(intent);
@@ -352,15 +351,14 @@ public class GoodActivity extends Activity implements GradationScrollView.Scroll
         oncreateListener();
     }
 
-
     //店铺信息的展示
     private void initShopInfo(Commodity commodity) {
         final Commodity commodity_1 = commodity;
 
-        NetWorks.getShopInfo(commodity.getSid(), new BaseObserver<Shop>() {
+        NetWorks.getShopInfo(commodity.getSid(), new BaseObserver<List<Shop>>() {
             @Override
-            public void onHandleSuccess(final Shop shop) {
-
+            public void onHandleSuccess(final List<Shop> shops) {
+                Shop shop = shops.get(0);
                 if (shop.getType().toString().contains(Commen.LINESHOP)) {
                     Glide.with(GoodActivity.this).load(shop.getLogo()).into(storeLogo);
                     if_online_store.setText(shop.getType());
@@ -399,32 +397,18 @@ public class GoodActivity extends Activity implements GradationScrollView.Scroll
                                 }
                             });
 
-                        } else if (assess == null) {
-                            Log.v("评价：", "null");
-                            assessLi.setVisibility(View.GONE);
-                            assess_num.setText("全部评价(" + 0 + ")");
                         }
                     }
 
                     @Override
                     public void onHandleError(int code, String message) {
+                        if (code == -1 && message == null) {
+                            assessLi.setVisibility(View.GONE);
+                            assess_num.setText("暂无评价");
+                        }
                         Log.v("评价：", "shibai");
                     }
                 });
-
-         /*          *//*查找店铺所在城市名称*//*
-                NetWorks.getCity(commodity_1.getCid(), new BaseObserver<City>() {
-                    @Override
-                    public void onHandleSuccess(City city) {
-                        //store_name.setText(city.getCityname());
-                        SpUtils.putString(GoodActivity.this, Commen.SHOPCITY, city.getCityname());
-                    }
-
-                    @Override
-                    public void onHandleError(int code, String message) {
-
-                    }
-                });*/
             }
 
             @Override
@@ -482,7 +466,7 @@ public class GoodActivity extends Activity implements GradationScrollView.Scroll
     };
 
 
-    //非店主查看商品信息时
+    //非店主查看商品信息时、返回键、比较键、店铺键
     private void otherLitener() {
         final Commodity commodity2 = (Commodity) getIntent().getSerializableExtra("commodity");
         //比较键
@@ -499,16 +483,24 @@ public class GoodActivity extends Activity implements GradationScrollView.Scroll
             @Override
             public void onClick(View v) {
                 final Commodity commodity = (Commodity) getIntent().getSerializableExtra("commodity");
-           /*    NetWorks.getIDshop(commodity.getSid(), new BaseObserver<Shop>() {
+
+                //通过商品sid去查看店铺
+                NetWorks.getShopInfoById(commodity.getSid(), new BaseObserver<Shop>() {
                     @Override
                     public void onHandleSuccess(Shop shop) {
-                        Intent intent = new Intent(GoodActivity.this, ShopActivity.class);
+                        //  headHolder.headShopname.setText(shop.getShopname());
                         Bundle bundle = new Bundle();
-                        bundle.putSerializable("shop", shop);
+                        bundle.putSerializable(Commen.SHOPINFO, shop);
+                        Intent intent = new Intent(GoodActivity.this, ShopActivity.class);
                         intent.putExtras(bundle);
                         startActivity(intent);
                     }
-                });*/
+
+                    @Override
+                    public void onHandleError(int code, String message) {
+                        Toast.makeText(GoodActivity.this, code + message, Toast.LENGTH_SHORT).show();
+                    }
+                });
             }
         });
         wantGood.setOnClickListener(new View.OnClickListener() {
@@ -518,11 +510,15 @@ public class GoodActivity extends Activity implements GradationScrollView.Scroll
                 NetWorks.getUserInfoBySiD(commodity.getSid(), new BaseObserver<User>() {
                     @Override
                     public void onHandleSuccess(User user) {
-                        Intent chat = new Intent(GoodActivity.this,ChactActivity.class);
-                        chat.putExtra(EaseConstant.EXTRA_USER_ID,user.getPhone());  //对方账号
+                        Intent chat = new Intent(GoodActivity.this, ChatActivity.class);
+                        chat.putExtra("commodity", commodity);
+                        chat.putExtra("you", true);
+                        chat.putExtra(EaseConstant.EXTRA_USER_ID, user.getPhone());  //对方账号
                         chat.putExtra(EaseConstant.EXTRA_CHAT_TYPE, EMMessage.ChatType.Chat); //单聊模式
                         startActivity(chat);
+
                     }
+
                     @Override
                     public void onHandleError(int code, String message) {
 
@@ -535,7 +531,7 @@ public class GoodActivity extends Activity implements GradationScrollView.Scroll
     }
 
     /**
-     * 返回键、比较键、店铺键、上下架的点击事件
+     * 求合作、上下架、看关注的点击事件
      */
     private void initlistener() {
 
@@ -650,7 +646,6 @@ public class GoodActivity extends Activity implements GradationScrollView.Scroll
                                         Toast.makeText(GoodActivity.this, "商品已添加到合作商品中", Toast.LENGTH_SHORT).show();
                                         cooperation.setText(getResources().getString(R.string.part_statue1));
                                         cooperation.setTextColor(getResources().getColor(R.color.colorBlack));
-                                        //  cooperation.setClickable(false);
                                         cooperation.setEnabled(false);
                                         dialog.dismiss();
 
@@ -677,14 +672,22 @@ public class GoodActivity extends Activity implements GradationScrollView.Scroll
 
                     getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
                     cooperationDialog.show();
-                }/* else if (cooperation.getText().toString().equals(getResources().getString(R.string.part_statue1))) {
-                    cooperation.setTextColor(getResources().getColor(R.color.colorBlack));
-                    //cooperation.setClickable(false);
-                    cooperation.setEnabled(false);
-                }*/
+                }
             }
         });
 
+        //跳转查看关注商品的用户
+        keep.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Bundle bundle = new Bundle();
+                bundle.putSerializable("commodity", commodity);
+                bundle.putInt(Commen.ATTENTIONTYPE, 0);
+                Intent intent = new Intent(GoodActivity.this, GoodAttentionActivity.class);
+                intent.putExtras(bundle);
+                startActivity(intent);
+            }
+        });
     }
 
     private void oncreateListener() {
@@ -696,16 +699,6 @@ public class GoodActivity extends Activity implements GradationScrollView.Scroll
             }
         });
 
-        keep.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Bundle bundle=new Bundle();
-                bundle.putSerializable("commodity",commodity);
-                Intent intent=new Intent(GoodActivity.this, GoodAttentionActivity.class);
-                intent.putExtras(bundle);
-                startActivity(intent);
-            }
-        });
 
 
         /**
@@ -803,9 +796,9 @@ public class GoodActivity extends Activity implements GradationScrollView.Scroll
 
             askButton.setVisibility(View.VISIBLE);
             //如果刚拉入下面执行动画
-            if(isAnmi){
-                ObjectAnimator scaleX = ObjectAnimator.ofFloat(askButton, "scaleX",0.7f,1f);
-                ObjectAnimator scaleY = ObjectAnimator.ofFloat(askButton, "scaleY", 0.7f,1f);
+            if (isAnmi) {
+                ObjectAnimator scaleX = ObjectAnimator.ofFloat(askButton, "scaleX", 0.7f, 1f);
+                ObjectAnimator scaleY = ObjectAnimator.ofFloat(askButton, "scaleY", 0.7f, 1f);
                 scaleX.setRepeatMode(ValueAnimator.REVERSE);
                 scaleX.setRepeatCount(0);
                 scaleY.setRepeatMode(ValueAnimator.REVERSE);
@@ -814,10 +807,10 @@ public class GoodActivity extends Activity implements GradationScrollView.Scroll
                 scaleX.setDuration(700);
                 scaleY.setDuration(500);
                 //set把两个动画加进来一起执行
-                AnimatorSet set=new AnimatorSet();
-                set.playTogether(scaleX,scaleY);
+                AnimatorSet set = new AnimatorSet();
+                set.playTogether(scaleX, scaleY);
                 set.start();
-                isAnmi=false;
+                isAnmi = false;
             }
 
             liTitle.setBackgroundColor(Color.argb((int) 255, 255, 255, 255));

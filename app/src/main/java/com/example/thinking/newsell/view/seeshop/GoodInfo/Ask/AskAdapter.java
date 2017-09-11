@@ -13,6 +13,7 @@ import android.widget.TextView;
 
 import com.example.thinking.newsell.R;
 import com.example.thinking.newsell.bean.Quest;
+import com.example.thinking.newsell.commen.Commen;
 
 import java.util.List;
 
@@ -35,11 +36,13 @@ public class AskAdapter extends RecyclerView.Adapter<AskAdapter.AskHolder > {
     private Context context;
     private LayoutInflater layoutInflater;
     private List<Quest> questList;
+    private int sid;
 
-    public AskAdapter(Context context, List<Quest> questList) {
+    public AskAdapter(Context context, List<Quest> questList, int sid) {
         this.context = context;
         this.questList = questList;
         layoutInflater = LayoutInflater.from(context);
+        this.sid=sid;
     }
 
     @Override
@@ -60,6 +63,8 @@ public class AskAdapter extends RecyclerView.Adapter<AskAdapter.AskHolder > {
         }
         holder.askItemMore.setText("查看"+quest.getReplies().size()+"个回答");
         holder.askItemTime.setText(quest.getAsktime());
+        holder.manyAtt.setText(quest.getAttemtionSize()+"人关注");
+
         holder.llAskItem.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -68,6 +73,9 @@ public class AskAdapter extends RecyclerView.Adapter<AskAdapter.AskHolder > {
                 bundle.putInt("commodityId",quest.getCid());
                 //被点击的问题信息
                 bundle.putSerializable("quest",quest);
+
+                Log.v("源头2sid：", sid+"");
+                bundle.putInt(Commen.SHOPSID,sid);
                 Intent intent=new Intent(context,ShowOneAskActivity.class);
                 intent.putExtra("bundle",bundle);
                context.startActivity(intent);
@@ -87,6 +95,7 @@ public class AskAdapter extends RecyclerView.Adapter<AskAdapter.AskHolder > {
         TextView askItemMore;
         TextView askItemTime;
         LinearLayout llAskItem;
+        TextView manyAtt;
 
         public AskHolder(View itemView) {
             super(itemView);
@@ -95,6 +104,7 @@ public class AskAdapter extends RecyclerView.Adapter<AskAdapter.AskHolder > {
             askItemMore=(TextView)itemView.findViewById(R.id.ask_item_more);
             askItemTime=(TextView)itemView.findViewById(R.id.ask_item_time);
             llAskItem=(LinearLayout)itemView.findViewById(R.id.ll_ask_item);
+            manyAtt=(TextView)itemView.findViewById(R.id.many_att);
         }
     }
 }

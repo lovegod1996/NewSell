@@ -16,14 +16,14 @@ import com.hyphenate.easeui.ui.EaseChatFragment;
  */
 
 public class ChactActivity extends AppCompatActivity {
-
+    EaseChatFragment easeChatFragment;
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.chat_activity_into);
 
-        EaseChatFragment easeChatFragment = new EaseChatFragment();  //环信聊天界面
+         easeChatFragment = new EaseChatFragment();  //环信聊天界面
         easeChatFragment.setArguments(getIntent().getExtras()); //需要的参数
         getSupportFragmentManager().beginTransaction().add(R.id.layout_chat,easeChatFragment).commit();  //Fragment切换
 

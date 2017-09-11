@@ -200,7 +200,7 @@ public final class EaseUI {
     
     /**
      * set user profile provider
-     * @param provider
+     * @param
      */
     public void setUserProfileProvider(EaseUserProfileProvider userProvider){
         this.userProvider = userProvider;
@@ -219,6 +219,9 @@ public final class EaseUI {
     }
     
     public EaseSettingsProvider getSettingsProvider(){
+        if(settingsProvider==null){
+            settingsProvider=new DefaultSettingsProvider();
+        }
         return settingsProvider;
     }
     
